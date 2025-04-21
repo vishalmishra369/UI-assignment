@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nerve</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1DA1F2;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+        }
+        .view-btn {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .view-btn.active {
+            background-color: #1DA1F2;
+            color: white;
+        }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .dropdown-options {
+            display: none;
+            position: absolute;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .dropdown:hover .dropdown-options {
+            display: block;
+        }
+        .dropdown-options div {
+            padding: 5px 10px;
+        }
+        .dropdown-options div:hover {
+            background-color: #f1f1f1;
+        }
+        .strategy-card {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .empty-state {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Nerve</h1>
+        <div class="view-toggle">
+            <div class="view-btn" data-view="Bullish">Bullish</div>
+            <div class="view-btn active" data-view="Bearish">Bearish</div>
+            <div class="view-btn" data-view="Rangebound">Rangebound</div>
+            <div class="view-btn" data-view="Volatile">Volatile</div>
+        </div>
+    </div>
+    <div class="dropdown">
+        <div class="dropdown-select" id="selectedDate">25 Apr 2024</div>
+        <div class="dropdown-options" id="dateOptions"></div>
+    </div>
+    <div id="strategyCards"></div>
+
+    <script>
+        const dateArray = ["24-Apr-2024", "02-May-2024", "09-May-2024", "31-May-2024", "21-Jun-2024"];
+        const strategyArray = {
+            "Bullish": {
+                "24-Apr-2024": ["Bull Call Spread", "Bull Put Spread", "Bull Put Spread", "Long Call", "Bull Put Spread", "Bull Call Spread", "Strategy1", "Bull Call"],
+                "02-May-2024": ["Bull Call Spread", "Bull Call Spread", "Bull Put Spread", "Long Call", "Long Call", "Strategy1", "Strategy2", "Bull Call Spread"],
+                "09-May-2024": ["Strategy Put", "Strategy Call", "Strategy Call", "Strategy Put"]
+            },
+            "Bearish": {
+                "24-Apr-2024": ["Bear Call Spread", "Bear Call Spread", "Bear Call Spread", "Long Put", "Long Put", "Bear Put Spread", "Bear Put Spread", "Bear Call Spread"],
+                "02-May-2024": ["Long Straddle", "Long Straddle", "Long Straddle", "Strategy1", "Spread-Strategy", "Bull Call Spread"],
+                "09-May-2024": ["Long Straddle", "Long Straddle", "Long Straddle", "Strategy1", "Strategy2", "Spread-Strategy"],
+                "31-May-2024": ["Strategy3", "Bear Put Spread", "Strategy3", "Long Put", "Long Put"],
+                "21-Jun-2024": ["Iron Condor", "Iron Butterfly", "Iron Butterfly", "Iron Butterfly", "Iron Condor"]
+            },
+            "Rangebound": {
+                "24-Apr-2024": ["Short Straddle", "Short Strangle", "Short Strangle", "Iron Butterfly", "Short Strangle", "Short Straddle", "Strategy1", "Short Straddle"],
+                "02-May-2024": ["Short Straddle", "Short Straddle", "Short Strangle", "Iron Butterfly", "Iron Butterfly", "Short Strangle"],
+                "21-Jun-2024": ["Iron Condor", "Iron Butterfly", "Iron Butterfly", "Iron Butterfly", "Iron Condor"]
+            },
+            "Volatile": {
+                "02-May-2024": ["Long Straddle", "Long Strangle", "Long Strangle", "Long Strangle", "Long Straddle", "Strategy1", "Long Straddle", "Strategy1", "Spread-Strategy"],
+                "09-May-2024": ["Long Straddle", "Long Straddle", "Long Strangle", "Long Strangle", "Long Straddle", "Strategy1", "Strategy2"],
+                "31-May-2024": ["Long Straddle", "Long Strangle", "Long Strangle", "Long Strangle", "Long Straddle"]
+            }
+        };
+
+        let currentView = "Bearish";
+        let currentDate = "25 Apr 2024";
+
+        // Populate date dropdown
+        const dateOptions = document.getElementById("dateOptions");
+        dateArray.forEach(date => {
+            const option = document.createElement("div");
+            option.textContent = date;
+            option.onclick = () => {
+                currentDate = date;
+                document.getElementById("selectedDate").textContent = date;
+                renderStrategies();
+            };
+            dateOptions.appendChild(option);
+        });
+
+        // View toggle functionality
+        document.querySelectorAll(".view-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                currentView = btn.getAttribute("data-view");
+                document.querySelectorAll(".view-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                renderStrategies();
+            });
+        });
+
+        // Render strategy cards
+        function renderStrategies() {
+            const cardsContainer = document.getElementById("strategyCards");
+            cardsContainer.innerHTML = "";
+            const strategies = strategyArray[currentView][currentDate] || [];
+
+            if (strategies.length === 0) {
+                const emptyState = document.createElement("div");
+                emptyState.className = "empty-state";
+                emptyState.innerHTML = `There are no strategies for<br>${currentDate}`;
+                cardsContainer.appendChild(emptyState);
+                return;
+            }
+
+            const strategyCount = {};
+            strategies.forEach(strategy => {
+                strategyCount[strategy] = (strategyCount[strategy] || 0) + 1;
+            });
+
+            Object.entries(strategyCount).forEach(([strategy, count]) => {
+                const card = document.createElement("div");
+                card.className = "strategy-card";
+                card.innerHTML = `${strategy} <span>&bull; ${count === 1 ? "1 Strategy" : `${count} Strategies`}</span>`;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        // Initial render
+        renderStrategies();
+    </script>
+</body>
+</html>
