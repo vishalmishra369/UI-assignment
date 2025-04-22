@@ -3,44 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nerve</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
             padding: 20px;
+            text-align: center;
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             border-bottom: 2px solid #1DA1F2;
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
         .view-toggle {
             display: flex;
+            justify-content: center;
             gap: 10px;
+            margin-bottom: 20px;
         }
         .view-btn {
-            padding: 5px 10px;
+            padding: 10px 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
             cursor: pointer;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        .view-btn:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-2px);
         }
         .view-btn.active {
             background-color: #1DA1F2;
             color: white;
+            border-color: #1DA1F2;
         }
         .dropdown {
             position: relative;
             display: inline-block;
+            margin-bottom: 20px;
         }
         .dropdown-select {
-            padding: 5px;
+            padding: 10px 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
             cursor: pointer;
+            background-color: white;
         }
         .dropdown-options {
             display: none;
@@ -48,46 +66,84 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: white;
-            min-width: 160px;
+            min-width: 200px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
         }
         .dropdown:hover .dropdown-options {
             display: block;
         }
         .dropdown-options div {
-            padding: 5px 10px;
+            padding: 10px 20px;
+            cursor: pointer;
         }
         .dropdown-options div:hover {
             background-color: #f1f1f1;
         }
+        .strategy-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         .strategy-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
             background-color: #f9f9f9;
-            padding: 10px;
+            padding: 10px 20px;
             margin: 10px 0;
             border-radius: 5px;
-            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .strategy-card .name {
+            margin-right: auto;
+        }
+        .strategy-card .count {
+            color: #666;
         }
         .empty-state {
             text-align: center;
             color: #666;
+            padding: 20px;
+        }
+        @media (max-width: 480px) {
+            .view-toggle {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .view-btn {
+                width: 100%;
+            }
+            .strategy-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .strategy-card .name {
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Nerve</h1>
+    <div class="container">
+        <div class="header">
+            <h1>Nerve Assignment</h1>
+        </div>
         <div class="view-toggle">
-            <div class="view-btn" data-view="Bullish">Bullish</div>
-            <div class="view-btn active" data-view="Bearish">Bearish</div>
+            <div class="view-btn active" data-view="Bullish">Bullish</div>
+            <div class="view-btn" data-view="Bearish">Bearish</div>
             <div class="view-btn" data-view="Rangebound">Rangebound</div>
             <div class="view-btn" data-view="Volatile">Volatile</div>
         </div>
+        <div class="dropdown">
+            <div class="dropdown-select" id="selectedDate">25 Apr 2024</div>
+            <div class="dropdown-options" id="dateOptions"></div>
+        </div>
+        <div class="strategy-container" id="strategyCards"></div>
     </div>
-    <div class="dropdown">
-        <div class="dropdown-select" id="selectedDate">25 Apr 2024</div>
-        <div class="dropdown-options" id="dateOptions"></div>
-    </div>
-    <div id="strategyCards"></div>
 
     <script>
         const dateArray = ["24-Apr-2024", "02-May-2024", "09-May-2024", "31-May-2024", "21-Jun-2024"];
@@ -116,10 +172,9 @@
             }
         };
 
-        let currentView = "Bearish";
+        let currentView = "Bullish";
         let currentDate = "25 Apr 2024";
 
-        // Populate date dropdown
         const dateOptions = document.getElementById("dateOptions");
         dateArray.forEach(date => {
             const option = document.createElement("div");
@@ -132,7 +187,6 @@
             dateOptions.appendChild(option);
         });
 
-        // View toggle functionality
         document.querySelectorAll(".view-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 currentView = btn.getAttribute("data-view");
@@ -142,7 +196,6 @@
             });
         });
 
-        // Render strategy cards
         function renderStrategies() {
             const cardsContainer = document.getElementById("strategyCards");
             cardsContainer.innerHTML = "";
@@ -164,12 +217,11 @@
             Object.entries(strategyCount).forEach(([strategy, count]) => {
                 const card = document.createElement("div");
                 card.className = "strategy-card";
-                card.innerHTML = `${strategy} <span>&bull; ${count === 1 ? "1 Strategy" : `${count} Strategies`}</span>`;
+                card.innerHTML = `<span class="name">${strategy}</span><span class="count">• ${count === 1 ? "1 Strategy" : `${count} Strategies`}</span>`;
                 cardsContainer.appendChild(card);
             });
         }
 
-        // Initial render
         renderStrategies();
     </script>
 </body>
